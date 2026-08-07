@@ -161,14 +161,14 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygD2KhV_zKIzOCE77MjcQE6XzD5JeA90L2rlOZH941hJjQ7kFR6vdfi1PUF4mETz5gAA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3u8RDZOGmLMXL30gRdc3IPZMgeIZUIrFHIQkF9I_aizGRrChmtH4b8Iv_3uYSKmBUwg/exec";
 
     let html5QrcodeScanner;
     let isProcessing = false;
     let currentStudent = null;
 
     // دالة تفعيل الاهتزاز
-    function triggerVibrate(ms = 200) {
+    function triggerVibrate(ms = 500) {
       if ("vibrate" in navigator) {
         navigator.vibrate(ms); // هز الموبايل لمدة 200 مللي ثانية
       }
