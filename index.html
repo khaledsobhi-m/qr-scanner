@@ -176,19 +176,12 @@
     // ==========================================
     // ضع رابط تطبيق جوجل سكريبت هنا
     // ==========================================
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3u8RDZOGmLMXL30gRdc3IPZMgeIZUIrFHIQkF9I_aizGRrChmtH4b8Iv_3uYSKmBUwg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3u8RDZOGmLMXL30gRdc3IPZMgeIZUIrFHIQkF9I_aizGRrChmtH4b8Iv_3uYSKmBUwg/exec/exec";
 
     let html5QrcodeScanner;
     let isProcessing = false;
     let currentStudent = null;
-    //**************************************************************************************
-    // دالة تفعيل الاهتزاز
-    function triggerVibrate(ms = 200) {
-      if ("vibrate" in navigator) {
-        navigator.vibrate(ms); // هز الموبايل لمدة 200 مللي ثانية
-      }
-    }
-    //**************************************************************************************
+
     // تشغيل الأصوات
     function playBeep(type) {
       try {
@@ -248,10 +241,7 @@
     function onScanSuccess(decodedText) {
       if (isProcessing) return;
       isProcessing = true;
-      //**************************************************************************************************
-      // اهتزاز الموبايل فور الالتقاط لتنبيه المستخدم
-      triggerVibrate(200);
-      //**************************************************************************************************
+
       const resultBox = document.getElementById('result-box');
       resultBox.style.display = 'block';
       resultBox.className = 'loading';
