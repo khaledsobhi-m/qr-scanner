@@ -12,14 +12,37 @@
       margin: 0;
       padding: 15px;
     }
-    #reader {
+    #interactive-container {
       width: 100%;
       max-width: 400px;
-      margin: 15px auto;
+      margin: 10px auto;
       border: 2px solid #333;
       border-radius: 12px;
       overflow: hidden;
       background: #000;
+      position: relative;
+    }
+    video {
+      width: 100%;
+      display: block;
+    }
+    .btn-capture {
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      padding: 15px 35px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 400px;
+    }
+    .btn-capture:active {
+      transform: scale(0.98);
+      background-color: #0b5ed7;
     }
     #result-box {
       margin: 20px auto;
@@ -34,18 +57,28 @@
     .not-found { background-color: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
     .loading { background-color: #fff3cd; color: #856404; border: 2px solid #ffeeba; }
   </style>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
 <body>
 
   <h2>ماسح الباركود و QR Code</h2>
-  <div id="reader"></div>
+  
+  <div id="interactive-container">
+    <video id="video"></video>
+  </div>
+
+  <button class="btn-capture" onclick="captureAndScan()">📷 التقاط وبحث</button>
+  
   <div id="result-box"></div>
 
+  <!-- عنصر Canvas مخفي للالتقاط -->
+  <canvas id="canvas" style="display:none;"></canvas>
+
   <script>
-    // ضع رابط تطبيق جوجل سكريبت الخاص بك هنا
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygD2KhV_zKIzOCE77MjcQE6XzD5JeA90L2rlOZH941hJjQ7kFR6vdfi1PUF4mETz5gAA/exec";
 
+    let codeReader;
+    let videoElement = document.getElementById('video');
     let isProcessing = false;
 
     function playBeep(type) {
@@ -77,15 +110,52 @@
       } catch (e) {}
     }
 
-    function onScanSuccess(decodedText) {
+    // تشغيل بث الكاميرا فور فتح الصفحة دون تحليل تلقائي
+    function initCamera() {
+      codeReader = new ZXing.BrowserMultiFormatReader();
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+          videoElement.srcObject = stream;
+          videoElement.play();
+        })
+        .catch(err => {
+          alert("تعذر فتح الكاميرا: " + err);
+        });
+    }
+
+    // دالة الالتقاط عند الضغط على الزر
+    function captureAndScan() {
       if (isProcessing) return;
-      isProcessing = true;
 
       const resultBox = document.getElementById('result-box');
       resultBox.style.display = 'block';
       resultBox.className = 'loading';
-      resultBox.innerText = 'جاري البحث...';
+      resultBox.innerText = 'جاري معالجة الصورة...';
+      isProcessing = true;
 
+      const canvas = document.getElementById('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+      // فحص اللقطة
+      codeReader.decodeFromCanvas(canvas)
+        .then(result => {
+          resultBox.innerText = 'جاري البحث...';
+          sendToScript(result.text);
+        })
+        .catch(err => {
+          resultBox.className = 'not-found';
+          resultBox.innerText = 'لم يتم التوصل لكود، وجه الكاميرا جيداً واضغط التقاط';
+          playBeep('not_found');
+          setTimeout(() => { isProcessing = false; }, 1500);
+        });
+    }
+
+    function sendToScript(decodedText) {
+      const resultBox = document.getElementById('result-box');
+      
       fetch(SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify({ code: decodedText })
@@ -101,21 +171,17 @@
           resultBox.innerText = 'غير مرشح';
           playBeep('not_found');
         }
-        setTimeout(() => { isProcessing = false; }, 2500);
+        setTimeout(() => { isProcessing = false; }, 2000);
       })
       .catch(err => {
         resultBox.className = 'not-found';
         resultBox.innerText = 'خطأ في الاتصال!';
-        setTimeout(() => { isProcessing = false; }, 2500);
+        setTimeout(() => { isProcessing = false; }, 2000);
       });
     }
 
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader", 
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      false
-    );
-    html5QrcodeScanner.render(onScanSuccess);
+    // تشغيل الكاميرا عند تحميل الصفحة
+    window.onload = initCamera;
   </script>
 </body>
 </html>
