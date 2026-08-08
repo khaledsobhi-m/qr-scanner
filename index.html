@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام الاستلام والكشف الطبي</title>
+  <title>مراجعة بيانات الطلاب الجدد</title>
   
-  <!-- استدعاء خط Changa من Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Changa:wght@400;600;700&display=swap" rel="stylesheet">
@@ -20,7 +19,6 @@
       color: #333;
     }
 
-    /* Container للتحكم في العرض */
     .container {
       max-width: 480px;
       margin: 0 auto;
@@ -30,12 +28,8 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    h2 {
-      margin-top: 0;
-      font-weight: 700;
-    }
+    h2 { margin-top: 0; font-weight: 700; }
 
-    /* منطقة الكاميرا */
     #reader {
       width: 100%;
       margin: 15px 0;
@@ -45,11 +39,10 @@
       background: #000;
     }
 
-    /* صندوق حالة النتيجة */
     #result-box {
       margin: 15px 0;
-      padding: 15px;
-      font-size: 22px;
+      padding: 12px;
+      font-size: 20px;
       font-weight: 700;
       border-radius: 10px;
       display: none;
@@ -58,7 +51,6 @@
     .not-found { background-color: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
     .loading { background-color: #fff3cd; color: #856404; border: 2px solid #ffeeba; }
 
-    /* جدول بيانات الطالب */
     .student-table {
       width: 100%;
       border-collapse: collapse;
@@ -76,27 +68,10 @@
       font-weight: 700;
     }
 
-    /* نصوص الأسئلة */
-    .question-blue {
-      color: #0d6efd;
-      font-size: 20px;
-      font-weight: 700;
-      margin: 15px 0;
-    }
-    .question-red {
-      color: #dc3545;
-      font-size: 20px;
-      font-weight: 700;
-      margin: 15px 0;
-    }
+    .question-blue { color: #0d6efd; font-size: 20px; font-weight: 700; margin: 15px 0; }
+    .question-red { color: #dc3545; font-size: 20px; font-weight: 700; margin: 15px 0; }
 
-    /* أزرار الإجابات */
-    .btn-group {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 15px;
-    }
+    .btn-group { display: flex; gap: 12px; justify-content: center; margin-top: 15px; }
     .btn {
       flex: 1;
       padding: 12px 0;
@@ -113,44 +88,26 @@
     .btn:active { transform: scale(0.98); }
   </style>
 
-  <!-- مكتبة قراءة الـ QR Code -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
 
   <div class="container">
-    
-    <!-- الصفحة الرئيسية: الكاميرا والمسح -->
     <div id="main-page">
       <h2>ماسح الباركود و QR Code</h2>
       <div id="reader"></div>
       <div id="result-box"></div>
     </div>
 
-    <!-- تفاصيل الطالب والأسئلة -->
     <div id="details-page" style="display: none;">
       <h2>بيانات الطالب</h2>
-      
       <table class="student-table">
-        <tr>
-          <th>اسم الطالب</th>
-          <td id="lbl-name"></td>
-        </tr>
-        <tr>
-          <th>الرقم القومي</th>
-          <td id="lbl-national-id"></td>
-        </tr>
-        <tr>
-          <th>الشهادة</th>
-          <td id="lbl-certificate"></td>
-        </tr>
-        <tr>
-          <th>النسبة المئوية</th>
-          <td id="lbl-percentage"></td>
-        </tr>
+        <tr><th>اسم الطالب</th><td id="lbl-name"></td></tr>
+        <tr><th>الرقم القومي</th><td id="lbl-national-id"></td></tr>
+        <tr><th>الشهادة</th><td id="lbl-certificate"></td></tr>
+        <tr><th>النسبة المئوية</th><td id="lbl-percentage"></td></tr>
       </table>
 
-      <!-- السؤال الأول: استلام الملف -->
       <div id="q-file-section">
         <div class="question-blue">هل تم استلام الملف؟</div>
         <div class="btn-group">
@@ -159,7 +116,6 @@
         </div>
       </div>
 
-      <!-- السؤال الثاني: الكشف الطبي -->
       <div id="q-medical-section" style="display: none;">
         <div class="question-red">هل تم اجراء الكشف الطبي؟</div>
         <div class="btn-group">
@@ -167,66 +123,54 @@
           <button class="btn btn-red" onclick="handleMedicalCheck(false)">لا</button>
         </div>
       </div>
-
     </div>
-
   </div>
 
   <script>
-    // ==========================================
-    // ضع رابط تطبيق جوجل سكريبت هنا
-    // ==========================================
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3u8RDZOGmLMXL30gRdc3IPZMgeIZUIrFHIQkF9I_aizGRrChmtH4b8Iv_3uYSKmBUwg/exec/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6ZTQYmKQ1DjjxBPl5WIwF3-kC40wU1lGajKGiJQ8VsApoOnIH5fQ1i5k9Ut8WKAjt-Q/exec";
 
     let html5QrcodeScanner;
     let isProcessing = false;
     let currentStudent = null;
 
-    // تشغيل الأصوات
+    function triggerVibrate() {
+      try {
+        if ("vibrate" in navigator) navigator.vibrate(200);
+      } catch (e) {}
+    }
+
     function playBeep(type) {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let osc = audioCtx.createOscillator();
+        osc.type = 'sine';
         if (type === 'found') {
-          let osc = audioCtx.createOscillator();
-          osc.type = 'sine';
           osc.frequency.setValueAtTime(880, audioCtx.currentTime);
           osc.connect(audioCtx.destination);
           osc.start();
-          osc.stop(audioCtx.currentTime + 0.2);
+          osc.stop(audioCtx.currentTime + 0.15);
         } else {
-          let now = audioCtx.currentTime;
-          let osc1 = audioCtx.createOscillator();
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(440, now);
-          osc1.connect(audioCtx.destination);
-          osc1.start(now);
-          osc1.stop(now + 0.15);
-          
-          let osc2 = audioCtx.createOscillator();
-          osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(440, now + 0.25);
-          osc2.connect(audioCtx.destination);
-          osc2.start(now + 0.25);
-          osc2.stop(now + 0.4);
+          osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+          osc.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.25);
         }
       } catch (e) {}
     }
 
-    // بدء الكاميرا افتراضياً على الكاميرا الخلفية
     function initScanner() {
       html5QrcodeScanner = new Html5QrcodeScanner(
         "reader", 
         { 
-          fps: 10, 
+          fps: 20, // سرعة مسح عالية
           qrbox: { width: 250, height: 250 },
-          facingMode: "environment" // ضبط الكاميرا الخلفية كخيار افتراضي
+          facingMode: "environment"
         },
         false
       );
       html5QrcodeScanner.render(onScanSuccess);
     }
 
-    // إيقاف واستئناف الكاميرا
     function resetToMainPage() {
       document.getElementById('details-page').style.display = 'none';
       document.getElementById('main-page').style.display = 'block';
@@ -242,6 +186,8 @@
       if (isProcessing) return;
       isProcessing = true;
 
+      triggerVibrate();
+
       const resultBox = document.getElementById('result-box');
       resultBox.style.display = 'block';
       resultBox.className = 'loading';
@@ -249,37 +195,31 @@
 
       fetch(SCRIPT_URL, {
         method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "search", code: decodedText })
       })
       .then(res => res.json())
       .then(response => {
         if (response.status === "found") {
-          resultBox.className = 'found';
-          resultBox.innerText = 'مرشح';
           playBeep('found');
-
           currentStudent = response.student;
-
-          // عرض شاشة التفاصيل والأسئلة بعد ثانيتين
-          setTimeout(() => {
-            showDetailsPage(response.student);
-          }, 1500);
-
+          // الانتقال الفوري للتفاصيل دون انتظر
+          showDetailsPage(response.student);
         } else {
           resultBox.className = 'not-found';
           resultBox.innerText = 'غير مرشح';
           playBeep('not_found');
-          setTimeout(() => { isProcessing = false; }, 2500);
+          setTimeout(() => { isProcessing = false; }, 1200);
         }
       })
       .catch(err => {
         resultBox.className = 'not-found';
         resultBox.innerText = 'خطأ في الاتصال!';
-        setTimeout(() => { isProcessing = false; }, 2500);
+        setTimeout(() => { isProcessing = false; }, 1200);
       });
     }
 
-    // إظهار صفحة التفاصيل
     function showDetailsPage(student) {
       document.getElementById('main-page').style.display = 'none';
       document.getElementById('details-page').style.display = 'block';
@@ -290,29 +230,24 @@
       document.getElementById('lbl-percentage').innerText = student.percentage;
     }
 
-    // التعامل مع سؤال استلام الملف
     function handleFileDelivery(isYes) {
       if (!isYes) {
         resetToMainPage();
         return;
       }
 
+      // تحديث بالخلفية والانتقال مباشرة للسؤال الثاني دون انتظار الرد
       fetch(SCRIPT_URL, {
         method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "update_file", rowIndex: currentStudent.rowIndex })
-      })
-      .then(res => res.json())
-      .then(response => {
-        // إخفاء سؤال الملف وإظهار سؤال الكشف الطبي
-        document.getElementById('q-file-section').style.display = 'none';
-        document.getElementById('q-medical-section').style.display = 'block';
-      })
-      .catch(err => {
-        alert("حدث خطأ في الاتصال، حاول مرة أخرى");
       });
+
+      document.getElementById('q-file-section').style.display = 'none';
+      document.getElementById('q-medical-section').style.display = 'block';
     }
 
-    // التعامل مع سؤال الكشف الطبي
     function handleMedicalCheck(isYes) {
       if (!isYes) {
         resetToMainPage();
@@ -321,18 +256,14 @@
 
       fetch(SCRIPT_URL, {
         method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "update_medical", rowIndex: currentStudent.rowIndex })
-      })
-      .then(res => res.json())
-      .then(response => {
-        resetToMainPage();
-      })
-      .catch(err => {
-        alert("حدث خطأ في الاتصال، حاول مرة أخرى");
       });
+
+      resetToMainPage();
     }
 
-    // تشغيل القارئ عند التحميل
     window.onload = initScanner;
   </script>
 </body>
