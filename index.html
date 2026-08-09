@@ -140,23 +140,46 @@
     }
 
     function playBeep(type) {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // ---------------------------------------------------
+    // 1. صوت "مرشح / موجود": صفارة واحدة حادة وقصيرة
+    // ---------------------------------------------------
+    if (type === 'found') {
+      let osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // تردد مرتفع (A5)
+      osc.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    } 
+    
+    // ---------------------------------------------------
+    // 2. صوت "غير مرشح": نغمة متكررة (Beep - Beep - Beep - Beep)
+    // ---------------------------------------------------
+    else {
+      const now = audioCtx.currentTime;
+      const beepDuration = 0.08; // مدة الصفارة الواحدة (80 مللي ثانية)
+      const pauseDuration = 0.05; // الفاصل الزمني بين كل صفارة وأخرى (50 مللي ثانية)
+      const freq = 400; // تردد نغمة الخطأ
+
+      for (let i = 0; i < 4; i++) {
         let osc = audioCtx.createOscillator();
         osc.type = 'sine';
-        if (type === 'found') {
-          osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-          osc.connect(audioCtx.destination);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.15);
-        } else {
-          osc.frequency.setValueAtTime(350, audioCtx.currentTime);
-          osc.connect(audioCtx.destination);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.25);
-        }
-      } catch (e) {}
+        osc.frequency.setValueAtTime(freq, now + i * (beepDuration + pauseDuration));
+        
+        osc.connect(audioCtx.destination);
+        
+        let startTime = now + i * (beepDuration + pauseDuration);
+        let stopTime = startTime + beepDuration;
+        
+        osc.start(startTime);
+        osc.stop(stopTime);
+      }
     }
+  } catch (e) {}
+}
 
     function initScanner() {
       html5QrcodeScanner = new Html5QrcodeScanner(
