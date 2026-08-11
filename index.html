@@ -105,6 +105,7 @@
         <tr><th>اسم الطالب</th><td id="lbl-name"></td></tr>
         <tr><th>الرقم القومي</th><td id="lbl-national-id"></td></tr>
         <tr><th>مؤهل الثانوية</th><td id="lbl-certificate"></td></tr>
+        <tr><th>تخصص الثانوية</th><td id="lbl-department"></td></tr>
         <tr><th>المجموع</th><td id="lbl-total"></td></tr>
         <tr><th>النسبة المئوية</th><td id="lbl-percentage"></td></tr>
       </table>
@@ -252,6 +253,7 @@ function onScanSuccess(decodedText) {
       document.getElementById('lbl-name').innerText = student.name;
       document.getElementById('lbl-national-id').innerText = student.nationalId;
       document.getElementById('lbl-certificate').innerText = student.certificate;
+      document.getElementById('lbl-department').innerText = student.department;
       document.getElementById('lbl-total').innerText = student.total;
       document.getElementById('lbl-percentage').innerText = student.percentage;
     }
