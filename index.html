@@ -104,7 +104,8 @@
       <table class="student-table">
         <tr><th>اسم الطالب</th><td id="lbl-name"></td></tr>
         <tr><th>الرقم القومي</th><td id="lbl-national-id"></td></tr>
-        <tr><th>الشهادة</th><td id="lbl-certificate"></td></tr>
+        <tr><th>مؤهل الثانوية</th><td id="lbl-certificate"></td></tr>
+        <tr><th>المجموع</th><td id="lbl-total"></td></tr>
         <tr><th>النسبة المئوية</th><td id="lbl-percentage"></td></tr>
       </table>
 
@@ -127,7 +128,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhg0RFW2L-XF73V_LNj6B1DX7TB2FSakUCUNvNbMnOPHUXL4Fw45WlUsF8dEbw-rgTrA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFA36QgQNsK94xDVjDTtDXwreFmWfVOJl_t_YMqeZLPlMKcGPQ7wJc1bYaJ_C25c1kmQ/exec";
 
     let html5QrcodeScanner;
     let isProcessing = false;
@@ -251,6 +252,7 @@ function onScanSuccess(decodedText) {
       document.getElementById('lbl-name').innerText = student.name;
       document.getElementById('lbl-national-id').innerText = student.nationalId;
       document.getElementById('lbl-certificate').innerText = student.certificate;
+      document.getElementById('lbl-total').innerText = student.percentage;
       document.getElementById('lbl-percentage').innerText = student.percentage;
     }
 
