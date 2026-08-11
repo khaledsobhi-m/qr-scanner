@@ -26,6 +26,29 @@
       padding: 20px;
       border-radius: 16px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      position: relative;
+    }
+
+    .sync-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #e9ecef;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-sync {
+      background: #0d6efd;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Changa', sans-serif;
     }
 
     h2 { margin-top: 0; font-weight: 700; }
@@ -93,6 +116,11 @@
 <body>
 
   <div class="container">
+    <div class="sync-bar">
+      <span id="sync-status">جاري تحضير قاعدة البيانات...</span>
+      <button class="btn-sync" onclick="loadDatabase()">تحديث</button>
+    </div>
+
     <div id="main-page">
       <h2>مراجعة بيانات الطلاب الجدد</h2>
       <div id="reader"></div>
@@ -129,11 +157,12 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1BEKl1S1a74I-5CLo5oYfjiHrjxsEYNtETBOFkqThRoNGRCveIi_PNXQbUIcNwNCz6A/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEOt7deAd3g_Z34uGNeHrm_OtxWi-IPUIbrDDDdf2ti1xqzGxiOyc94x2wL5Pjj6UNXA/exec";
 
     let html5QrcodeScanner;
     let isProcessing = false;
     let currentStudent = null;
+    let studentsDB = {}; // تخزين البيانات محلياً للبحث اللحظي
 
     function triggerVibrate() {
       try {
@@ -144,8 +173,6 @@
     function playBeep(type) {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // 1. صوت "مرشح / موجود": صفارة واحدة حادة وقصيرة
         if (type === 'found') {
           let osc = audioCtx.createOscillator();
           osc.type = 'sine';
@@ -153,10 +180,7 @@
           osc.connect(audioCtx.destination);
           osc.start();
           osc.stop(audioCtx.currentTime + 0.15);
-        } 
-        
-        // 2. صوت "غير مرشح": نغمة متكررة
-        else {
+        } else {
           const now = audioCtx.currentTime;
           const beepDuration = 0.08;
           const pauseDuration = 0.05;
@@ -166,12 +190,9 @@
             let osc = audioCtx.createOscillator();
             osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, now + i * (beepDuration + pauseDuration));
-            
             osc.connect(audioCtx.destination);
-            
             let startTime = now + i * (beepDuration + pauseDuration);
             let stopTime = startTime + beepDuration;
-            
             osc.start(startTime);
             osc.stop(stopTime);
           }
@@ -179,11 +200,32 @@
       } catch (e) {}
     }
 
+    // تحميل قاعدة البيانات محلياً مرة واحدة
+    function loadDatabase() {
+      const statusLbl = document.getElementById('sync-status');
+      statusLbl.innerText = 'جاري التحميل...';
+
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === "success") {
+            studentsDB = res.students;
+            const count = Object.keys(studentsDB).length;
+            statusLbl.innerText = `تم تحميل ${count} طالب جاهز`;
+          } else {
+            statusLbl.innerText = 'خطأ في التحميل!';
+          }
+        })
+        .catch(() => {
+          statusLbl.innerText = 'فشل الاتصال بالشيت!';
+        });
+    }
+
     function initScanner() {
       html5QrcodeScanner = new Html5QrcodeScanner(
         "reader", 
         { 
-          fps: 20,
+          fps: 25,
           qrbox: { width: 250, height: 250 },
           facingMode: "environment"
         },
@@ -203,9 +245,10 @@
       
       setTimeout(() => {
         isProcessing = false;
-      }, 300);
+      }, 200);
     }
 
+    // البحث اللحظي الفوري بدون انتظار شبكة
     function onScanSuccess(decodedText) {
       if (isProcessing) return;
       isProcessing = true;
@@ -214,35 +257,20 @@
 
       const resultBox = document.getElementById('result-box');
       resultBox.style.display = 'block';
-      resultBox.className = 'loading';
-      resultBox.innerText = 'جاري البحث...';
 
-      const cleanedCode = String(decodedText).trim();
+      const cleanedCode = String(decodedText).trim().toLowerCase();
+      const student = studentsDB[cleanedCode];
 
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        redirect: "follow",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "search", code: cleanedCode })
-      })
-      .then(res => res.json())
-      .then(response => {
-        if (response.status === "found") {
-          playBeep('found');
-          currentStudent = response.student;
-          showDetailsPage(response.student);
-        } else {
-          resultBox.className = 'not-found';
-          resultBox.innerText = 'غير مرشح';
-          playBeep('not_found');
-          setTimeout(() => { isProcessing = false; }, 1200);
-        }
-      })
-      .catch(err => {
+      if (student) {
+        playBeep('found');
+        currentStudent = student;
+        showDetailsPage(student);
+      } else {
         resultBox.className = 'not-found';
-        resultBox.innerText = 'خطأ في الاتصال!';
-        setTimeout(() => { isProcessing = false; }, 1200);
-      });
+        resultBox.innerText = 'غير مرشح';
+        playBeep('not_found');
+        setTimeout(() => { isProcessing = false; }, 1000);
+      }
     }
 
     function showDetailsPage(student) {
@@ -263,7 +291,7 @@
         return;
       }
 
-      // إرسال السجل فوراً بالخلفية دون إيقاف الواجهة
+      // إرسال في الخلفية فوري دون إيقاف الواجهة
       fetch(SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
@@ -281,7 +309,7 @@
         return;
       }
 
-      // إرسال السجل فوراً بالخلفية والعودة للشاشة الرئيسية
+      // إرسال في الخلفية فوري والعودة للشاشة الرئيسية فوراً
       fetch(SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
@@ -292,7 +320,10 @@
       resetToMainPage();
     }
 
-    window.onload = initScanner;
+    window.onload = function() {
+      loadDatabase();
+      initScanner();
+    };
   </script>
 </body>
 </html>
