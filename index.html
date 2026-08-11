@@ -129,7 +129,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2Ditm3J1oAkcFqfqybgUjOWRjakH84jK_cwBFm-_WgoPQKOLS0z-k6pCaVBj0tZqxZA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1BEKl1S1a74I-5CLo5oYfjiHrjxsEYNtETBOFkqThRoNGRCveIi_PNXQbUIcNwNCz6A/exec";
 
     let html5QrcodeScanner;
     let isProcessing = false;
@@ -149,7 +149,7 @@
         if (type === 'found') {
           let osc = audioCtx.createOscillator();
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(880, audioCtx.currentTime); // تردد مرتفع (A5)
+          osc.frequency.setValueAtTime(880, audioCtx.currentTime);
           osc.connect(audioCtx.destination);
           osc.start();
           osc.stop(audioCtx.currentTime + 0.15);
@@ -201,10 +201,9 @@
       
       currentStudent = null;
       
-      // إعطاء مهلة بسيطة لضمان إعادة فتح الماسح وتفادي المسح المكرر اللحظي
       setTimeout(() => {
         isProcessing = false;
-      }, 500);
+      }, 300);
     }
 
     function onScanSuccess(decodedText) {
@@ -236,13 +235,13 @@
           resultBox.className = 'not-found';
           resultBox.innerText = 'غير مرشح';
           playBeep('not_found');
-          setTimeout(() => { isProcessing = false; }, 1500);
+          setTimeout(() => { isProcessing = false; }, 1200);
         }
       })
       .catch(err => {
         resultBox.className = 'not-found';
         resultBox.innerText = 'خطأ في الاتصال!';
-        setTimeout(() => { isProcessing = false; }, 1500);
+        setTimeout(() => { isProcessing = false; }, 1200);
       });
     }
 
@@ -264,9 +263,10 @@
         return;
       }
 
+      // إرسال السجل فوراً بالخلفية دون إيقاف الواجهة
       fetch(SCRIPT_URL, {
         method: "POST",
-        redirect: "follow",
+        mode: "no-cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "update_file", rowIndex: currentStudent.rowIndex })
       });
@@ -281,9 +281,10 @@
         return;
       }
 
+      // إرسال السجل فوراً بالخلفية والعودة للشاشة الرئيسية
       fetch(SCRIPT_URL, {
         method: "POST",
-        redirect: "follow",
+        mode: "no-cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "update_medical", rowIndex: currentStudent.rowIndex })
       });
