@@ -129,7 +129,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzxxyibFflgeps3jS5tGF72F8odqogABfzPN2oGoZ50tTDyoBz9GZzYuMSjNKwYFDylGA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2Ditm3J1oAkcFqfqybgUjOWRjakH84jK_cwBFm-_WgoPQKOLS0z-k6pCaVBj0tZqxZA/exec";
 
     let html5QrcodeScanner;
     let isProcessing = false;
@@ -142,52 +142,48 @@
     }
 
     function playBeep(type) {
-  try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    // ---------------------------------------------------
-    // 1. صوت "مرشح / موجود": صفارة واحدة حادة وقصيرة
-    // ---------------------------------------------------
-    if (type === 'found') {
-      let osc = audioCtx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // تردد مرتفع (A5)
-      osc.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
-    } 
-    
-    // ---------------------------------------------------
-    // 2. صوت "غير مرشح": نغمة متكررة (Beep - Beep - Beep - Beep)
-    // ---------------------------------------------------
-    else {
-      const now = audioCtx.currentTime;
-      const beepDuration = 0.08; // مدة الصفارة الواحدة (80 مللي ثانية)
-      const pauseDuration = 0.05; // الفاصل الزمني بين كل صفارة وأخرى (50 مللي ثانية)
-      const freq = 400; // تردد نغمة الخطأ
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // 1. صوت "مرشح / موجود": صفارة واحدة حادة وقصيرة
+        if (type === 'found') {
+          let osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, audioCtx.currentTime); // تردد مرتفع (A5)
+          osc.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.15);
+        } 
+        
+        // 2. صوت "غير مرشح": نغمة متكررة
+        else {
+          const now = audioCtx.currentTime;
+          const beepDuration = 0.08;
+          const pauseDuration = 0.05;
+          const freq = 400;
 
-      for (let i = 0; i < 4; i++) {
-        let osc = audioCtx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + i * (beepDuration + pauseDuration));
-        
-        osc.connect(audioCtx.destination);
-        
-        let startTime = now + i * (beepDuration + pauseDuration);
-        let stopTime = startTime + beepDuration;
-        
-        osc.start(startTime);
-        osc.stop(stopTime);
-      }
+          for (let i = 0; i < 4; i++) {
+            let osc = audioCtx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + i * (beepDuration + pauseDuration));
+            
+            osc.connect(audioCtx.destination);
+            
+            let startTime = now + i * (beepDuration + pauseDuration);
+            let stopTime = startTime + beepDuration;
+            
+            osc.start(startTime);
+            osc.stop(stopTime);
+          }
+        }
+      } catch (e) {}
     }
-  } catch (e) {}
-}
 
     function initScanner() {
       html5QrcodeScanner = new Html5QrcodeScanner(
         "reader", 
         { 
-          fps: 20, // سرعة مسح عالية
+          fps: 20,
           qrbox: { width: 250, height: 250 },
           facingMode: "environment"
         },
@@ -204,58 +200,62 @@
       document.getElementById('q-medical-section').style.display = 'none';
       
       currentStudent = null;
-      isProcessing = false;
+      
+      // إعطاء مهلة بسيطة لضمان إعادة فتح الماسح وتفادي المسح المكرر اللحظي
+      setTimeout(() => {
+        isProcessing = false;
+      }, 500);
     }
-function onScanSuccess(decodedText) {
-  if (isProcessing) return;
-  isProcessing = true;
 
-  triggerVibrate();
+    function onScanSuccess(decodedText) {
+      if (isProcessing) return;
+      isProcessing = true;
 
-  const resultBox = document.getElementById('result-box');
-  resultBox.style.display = 'block';
-  resultBox.className = 'loading';
-  resultBox.innerText = 'جاري البحث...';
+      triggerVibrate();
 
-  // تنظيف الكود قبل إرساله
-  const cleanedCode = String(decodedText).trim();
+      const resultBox = document.getElementById('result-box');
+      resultBox.style.display = 'block';
+      resultBox.className = 'loading';
+      resultBox.innerText = 'جاري البحث...';
 
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    redirect: "follow", // لضمان تتبع توجيه جوجل الصحيح
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action: "search", code: cleanedCode })
-  })
-  .then(res => res.json())
-  .then(response => {
-    if (response.status === "found") {
-      playBeep('found');
-      currentStudent = response.student;
-      showDetailsPage(response.student);
-    } else {
-      resultBox.className = 'not-found';
-      resultBox.innerText = 'غير مرشح';
-      playBeep('not_found');
-      setTimeout(() => { isProcessing = false; }, 1500);
+      const cleanedCode = String(decodedText).trim();
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        redirect: "follow",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "search", code: cleanedCode })
+      })
+      .then(res => res.json())
+      .then(response => {
+        if (response.status === "found") {
+          playBeep('found');
+          currentStudent = response.student;
+          showDetailsPage(response.student);
+        } else {
+          resultBox.className = 'not-found';
+          resultBox.innerText = 'غير مرشح';
+          playBeep('not_found');
+          setTimeout(() => { isProcessing = false; }, 1500);
+        }
+      })
+      .catch(err => {
+        resultBox.className = 'not-found';
+        resultBox.innerText = 'خطأ في الاتصال!';
+        setTimeout(() => { isProcessing = false; }, 1500);
+      });
     }
-  })
-  .catch(err => {
-    resultBox.className = 'not-found';
-    resultBox.innerText = 'خطأ في الاتصال!';
-    setTimeout(() => { isProcessing = false; }, 1500);
-  });
-}
 
     function showDetailsPage(student) {
       document.getElementById('main-page').style.display = 'none';
       document.getElementById('details-page').style.display = 'block';
 
-      document.getElementById('lbl-name').innerText = student.name;
-      document.getElementById('lbl-national-id').innerText = student.nationalId;
-      document.getElementById('lbl-certificate').innerText = student.certificate;
-      document.getElementById('lbl-department').innerText = student.department;
-      document.getElementById('lbl-total').innerText = student.total;
-      document.getElementById('lbl-percentage').innerText = student.percentage;
+      document.getElementById('lbl-name').innerText = student.name || '---';
+      document.getElementById('lbl-national-id').innerText = student.nationalId || '---';
+      document.getElementById('lbl-certificate').innerText = student.certificate || '---';
+      document.getElementById('lbl-department').innerText = student.department || '---';
+      document.getElementById('lbl-total').innerText = student.total || '---';
+      document.getElementById('lbl-percentage').innerText = student.percentage || '---';
     }
 
     function handleFileDelivery(isYes) {
@@ -264,10 +264,9 @@ function onScanSuccess(decodedText) {
         return;
       }
 
-      // تحديث بالخلفية والانتقال مباشرة للسؤال الثاني دون انتظار الرد
       fetch(SCRIPT_URL, {
         method: "POST",
-        mode: "cors",
+        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "update_file", rowIndex: currentStudent.rowIndex })
       });
@@ -284,7 +283,7 @@ function onScanSuccess(decodedText) {
 
       fetch(SCRIPT_URL, {
         method: "POST",
-        mode: "cors",
+        redirect: "follow",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "update_medical", rowIndex: currentStudent.rowIndex })
       });
